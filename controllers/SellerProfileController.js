@@ -40,6 +40,7 @@ export const createSellerProfile = async (req, res, collection) => {
       title: bodyData.title || null,
       bio: bodyData.bio || null,
       description: bodyData.description || null,
+      rate: bodyData.rate || 0,
       skills: bodyData.skills || null,
       rating: 0,
       totalOrders: 0,
