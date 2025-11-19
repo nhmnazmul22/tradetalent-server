@@ -3,6 +3,18 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import { MongoClient, ServerApiVersion } from "mongodb";
+import {
+  createUser,
+  deleteUser,
+  getUser,
+  updateUser,
+} from "./controllers/UsersController.js";
+import {
+  createSellerProfile,
+  getSellerProfile,
+  getSellerProfiles,
+  updateSellerProfile,
+} from "./controllers/SellerProfileController.js";
 
 // Initialize Apps
 const app = express();
@@ -31,12 +43,27 @@ async function runDB() {
     const database = await client.db("tradeTalent");
     // Collection
     const usersColl = database.collection("users");
+    const sellerProfileColl = database.collection("sellerProfiles");
 
     // Users Routes
-    app.post("/create-user", () => {});
-    app.get("/user/:userId", () => {});
-    app.put("/user/:userId", () => {});
-    app.delete("/users/:userId", () => {});
+    app.post("/create-user", (req, res) => createUser(req, res, usersColl));
+    app.get("/user/:userId", (req, res) => getUser(req, res, usersColl));
+    app.put("/user/:userId", (req, res) => updateUser(req, res, usersColl));
+    app.delete("/user/:userId", (req, res) => deleteUser(req, res, usersColl));
+
+    // Seller Routes
+    app.get("/seller-profiles", (req, res) =>
+      getSellerProfiles(req, res, sellerProfileColl)
+    );
+    app.post("/seller-profile", (req, res) =>
+      createSellerProfile(req, res, sellerProfileColl)
+    );
+    app.get("/seller-profile/:userId", (req, res) =>
+      getSellerProfile(req, res, sellerProfileColl)
+    );
+    app.put("/seller-profile/:userId", (req, res) =>
+      updateSellerProfile(req, res, sellerProfileColl)
+    );
 
     //  Ping the database
     await client.db("admin").command({ ping: 1 });
