@@ -142,7 +142,6 @@ db.collection("users").insertOne(...)
 
 If you like this project, consider:
 
-- ⭐ Starring the repo
 - 🐛 Reporting issues
 - 🔥 Suggesting improvements
 
