@@ -18,14 +18,14 @@ export const createSellerProfile = async (req, res, collection) => {
   try {
     const bodyData = req.body;
 
-    if (!bodyData.userId) {
+    if (!bodyData.userEmail) {
       return res.status(400).json({
         success: false,
-        message: "User id is required",
+        message: "User email is required",
       });
     }
 
-    const query = { userId: new ObjectId(bodyData.userId) };
+    const query = { userEmail: bodyData.userEmail };
     const sellerProfile = await collection.findOne(query);
 
     if (sellerProfile) {
@@ -36,17 +36,24 @@ export const createSellerProfile = async (req, res, collection) => {
     }
 
     const sellerProfileData = {
-      userId: new ObjectId(bodyData.userId),
+      userEmail: bodyData.userEmail,
       title: bodyData.title || null,
       bio: bodyData.bio || null,
       description: bodyData.description || null,
-      rate: bodyData.rate || 0,
-      skills: bodyData.skills || null,
+      price: bodyData.price || null,
+      pricingType: bodyData.pricingType || null,
+      location: bodyData.location || null,
+      language: bodyData.language || null,
+      featured: false,
+      verified: bodyData.verified || false,
       rating: 0,
       totalOrders: 0,
+      totalReviews: 0,
+      skills: bodyData.skills || [],
       createdAt: generateTimeStamp(),
       updatedAt: generateTimeStamp("updatedAt"),
     };
+
     const result = await collection.insertOne(sellerProfileData);
     return res.status(201).json({ success: true, data: result });
   } catch (err) {
@@ -59,8 +66,8 @@ export const createSellerProfile = async (req, res, collection) => {
 
 export const getSellerProfile = async (req, res, collection) => {
   try {
-    const { userId } = req.params;
-    const query = { userId: new ObjectId(userId) };
+    const { userEmail } = req.params;
+    const query = { userEmail: userEmail };
     const result = await collection.findOne(query);
 
     if (!result) {
@@ -81,9 +88,9 @@ export const getSellerProfile = async (req, res, collection) => {
 
 export const updateSellerProfile = async (req, res, collection) => {
   try {
-    const { userId } = req.params;
+    const { userEmail } = req.params;
+    const query = { userEmail: userEmail };
     const bodyData = req.body;
-    const query = { userId: new ObjectId(userId) };
     const sellerProfile = await collection.findOne(query);
 
     if (!sellerProfile) {

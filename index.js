@@ -20,7 +20,7 @@ import {
   deleteService,
   getService,
   getServices,
-  getServicesBySellerId,
+  getServicesBySellerEmail,
   updateService,
 } from "./controllers/ServiceController.js";
 import {
@@ -63,9 +63,9 @@ async function runDB() {
 
     // Users Routes
     app.post("/create-user", (req, res) => createUser(req, res, usersColl));
-    app.get("/user/:userId", (req, res) => getUser(req, res, usersColl));
-    app.put("/user/:userId", (req, res) => updateUser(req, res, usersColl));
-    app.delete("/user/:userId", (req, res) => deleteUser(req, res, usersColl));
+    app.get("/user/:email", (req, res) => getUser(req, res, usersColl));
+    app.put("/user/:email", (req, res) => updateUser(req, res, usersColl));
+    app.delete("/user/:email", (req, res) => deleteUser(req, res, usersColl));
 
     // Seller Routes
     app.get("/seller-profiles", (req, res) =>
@@ -74,20 +74,20 @@ async function runDB() {
     app.post("/seller-profile", (req, res) =>
       createSellerProfile(req, res, sellerProfileColl)
     );
-    app.get("/seller-profile/:userId", (req, res) =>
+    app.get("/seller-profile/:userEmail", (req, res) =>
       getSellerProfile(req, res, sellerProfileColl)
     );
-    app.put("/seller-profile/:userId", (req, res) =>
+    app.put("/seller-profile/:userEmail", (req, res) =>
       updateSellerProfile(req, res, sellerProfileColl)
     );
 
     // Services Routes
     app.get("/services", (req, res) => getServices(req, res, servicesColl));
-    app.get("/my-services/:sellerId", (req, res) =>
-      getServicesBySellerId(req, res, servicesColl)
+    app.get("/my-services/:sellerEmail", (req, res) =>
+      getServicesBySellerEmail(req, res, servicesColl)
     );
     app.post("/services", (req, res) => createService(req, res, servicesColl));
-    app.get("/services/:serviceId", (req, res) =>
+    app.get("/services/:userEmail", (req, res) =>
       getService(req, res, servicesColl)
     );
     app.put("/services/:serviceId", (req, res) =>
@@ -99,10 +99,10 @@ async function runDB() {
 
     // Order Routes
     app.get("/orders", (req, res) => getOrders(req, res, ordersColl));
-    app.get("/seller-orders/:sellerId", (req, res) =>
+    app.get("/seller-orders/:userEmail", (req, res) =>
       getOrderBySellerId(req, res, ordersColl)
     );
-    app.get("/buyer-orders/:buyerId", (req, res) =>
+    app.get("/buyer-orders/:userEmail", (req, res) =>
       getOrderByBuyerId(req, res, ordersColl)
     );
     app.post("/create-order", (req, res) => createOrder(req, res, ordersColl));

@@ -5,7 +5,7 @@ export const createService = async (req, res, collection) => {
   try {
     const bodyData = req.body;
     const serviceData = {
-      sellerId: new ObjectId(bodyData.sellerId) || null,
+      sellerEmail: bodyData.sellerEmail || null,
       title: bodyData.title || null,
       description: bodyData.description || null,
       category: bodyData.category || null,
@@ -40,10 +40,10 @@ export const getServices = async (req, res, collection) => {
   }
 };
 
-export const getServicesBySellerId = async (req, res, collection) => {
+export const getServicesBySellerEmail = async (req, res, collection) => {
   try {
-    const { sellerId } = req.params;
-    const query = { sellerId: new ObjectId(sellerId) };
+    const { sellerEmail } = req.params;
+    const query = { sellerEmail: sellerEmail };
     const cursor = await collection.find(query);
     const result = await cursor.toArray();
     return res.status(200).json({ success: true, data: result });
@@ -57,8 +57,8 @@ export const getServicesBySellerId = async (req, res, collection) => {
 
 export const getService = async (req, res, collection) => {
   try {
-    const { serviceId } = req.params;
-    const query = { _id: new ObjectId(serviceId) };
+    const { sellerEmail } = req.params;
+    const query = { sellerEmail: sellerEmail };
     const result = await collection.findOne(query);
 
     if (!result) {
@@ -79,8 +79,8 @@ export const getService = async (req, res, collection) => {
 export const updateService = async (req, res, collection) => {
   try {
     const { serviceId } = req.params;
-    const bodyData = req.body;
     const query = { _id: new ObjectId(serviceId) };
+    const bodyData = req.body;
     const service = await collection.findOne(query);
 
     if (!service) {

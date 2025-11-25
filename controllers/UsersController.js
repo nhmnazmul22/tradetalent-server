@@ -16,7 +16,9 @@ export const createUser = async (req, res, collection) => {
 
     const userData = {
       name: bodyData.name || null,
+      username: bodyData.username || null,
       email: bodyData.email || null,
+      phone: bodyData.phone || null,
       role: bodyData.role || null,
       avatar: bodyData.avatar || null,
       createdAt: generateTimeStamp(),
@@ -34,8 +36,8 @@ export const createUser = async (req, res, collection) => {
 
 export const getUser = async (req, res, collection) => {
   try {
-    const { userId } = req.params;
-    const query = { _id: new ObjectId(userId) };
+    const { email } = req.params;
+    const query = { email: email };
     const result = await collection.findOne(query);
 
     if (!result) {
@@ -56,9 +58,9 @@ export const getUser = async (req, res, collection) => {
 
 export const updateUser = async (req, res, collection) => {
   try {
-    const { userId } = req.params;
+    const { email } = req.params;
     const bodyData = req.body;
-    const query = { _id: new ObjectId(userId) };
+    const query = { email: email };
     const user = await collection.findOne(query);
 
     if (!user) {
@@ -87,8 +89,8 @@ export const updateUser = async (req, res, collection) => {
 
 export const deleteUser = async (req, res, collection) => {
   try {
-    const { userId } = req.params;
-    const query = { _id: new ObjectId(userId) };
+    const { email } = req.params;
+    const query = { email: email };
     const user = await collection.findOne(query);
 
     if (!user) {
