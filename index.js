@@ -13,11 +13,13 @@ import {
   createSellerProfile,
   getSellerProfile,
   getSellerProfiles,
+  getTopSellerProfiles,
   updateSellerProfile,
 } from "./controllers/SellerProfileController.js";
 import {
   createService,
   deleteService,
+  getFeaturedServices,
   getService,
   getServices,
   getServicesBySellerEmail,
@@ -25,9 +27,11 @@ import {
 } from "./controllers/ServiceController.js";
 import {
   createOrder,
-  getOrderByBuyerId,
-  getOrderBySellerId,
+  deleteOrder,
+  getOrder,
+  getOrderBySellerEmail,
   getOrders,
+  updateOrder,
 } from "./controllers/OrderController.js";
 
 // Initialize Apps
@@ -71,6 +75,9 @@ async function runDB() {
     app.get("/seller-profiles", (req, res) =>
       getSellerProfiles(req, res, sellerProfileColl)
     );
+    app.get("/top-seller-profiles", (req, res) =>
+      getTopSellerProfiles(req, res, sellerProfileColl)
+    );
     app.post("/seller-profile", (req, res) =>
       createSellerProfile(req, res, sellerProfileColl)
     );
@@ -83,11 +90,14 @@ async function runDB() {
 
     // Services Routes
     app.get("/services", (req, res) => getServices(req, res, servicesColl));
+    app.get("/featured-services", (req, res) =>
+      getFeaturedServices(req, res, servicesColl)
+    );
     app.get("/my-services/:sellerEmail", (req, res) =>
       getServicesBySellerEmail(req, res, servicesColl)
     );
     app.post("/services", (req, res) => createService(req, res, servicesColl));
-    app.get("/services/:userEmail", (req, res) =>
+    app.get("/services/:serviceId", (req, res) =>
       getService(req, res, servicesColl)
     );
     app.put("/services/:serviceId", (req, res) =>
@@ -99,19 +109,16 @@ async function runDB() {
 
     // Order Routes
     app.get("/orders", (req, res) => getOrders(req, res, ordersColl));
-    app.get("/seller-orders/:userEmail", (req, res) =>
-      getOrderBySellerId(req, res, ordersColl)
-    );
-    app.get("/buyer-orders/:userEmail", (req, res) =>
-      getOrderByBuyerId(req, res, ordersColl)
+    app.get("/seller-orders/:sellerEmail", (req, res) =>
+      getOrderBySellerEmail(req, res, ordersColl)
     );
     app.post("/create-order", (req, res) => createOrder(req, res, ordersColl));
-    app.get("/orders/:orderId", (req, res) => getService(req, res, ordersColl));
+    app.get("/orders/:orderId", (req, res) => getOrder(req, res, ordersColl));
     app.put("/orders/:orderId", (req, res) =>
-      updateService(req, res, ordersColl)
+      updateOrder(req, res, ordersColl)
     );
     app.delete("/orders/:orderId", (req, res) =>
-      deleteService(req, res, ordersColl)
+      deleteOrder(req, res, ordersColl)
     );
 
     //  Ping the database
