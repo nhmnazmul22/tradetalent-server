@@ -4,17 +4,7 @@ import { generateTimeStamp } from "../lib/until.js";
 export const createOrder = async (req, res, collection) => {
   try {
     const bodyData = req.body;
-    const serviceData = {
-      buyerId: new ObjectId(bodyData.buyerId),
-      sellerId: new ObjectId(bodyData.sellerId),
-      serviceId: new ObjectId(bodyData.serviceId),
-      package: bodyData.package || null,
-      price: bodyData.price || null,
-      status: "pending",
-      createdAt: generateTimeStamp(),
-      updatedAt: generateTimeStamp("updatedAt"),
-    };
-    const result = await collection.insertOne(serviceData);
+    const result = await collection.insertOne(bodyData);
     return res.status(201).json({ success: true, data: result });
   } catch (err) {
     return res.status(500).json({
@@ -26,7 +16,7 @@ export const createOrder = async (req, res, collection) => {
 
 export const getOrders = async (req, res, collection) => {
   try {
-    const cursor = await collection.find({});
+    const cursor = await collection.find();
     const result = await cursor.toArray();
     return res.status(200).json({ success: true, data: result });
   } catch (err) {
@@ -37,25 +27,10 @@ export const getOrders = async (req, res, collection) => {
   }
 };
 
-export const getOrderBySellerId = async (req, res, collection) => {
+export const getOrderBySellerEmail = async (req, res, collection) => {
   try {
-    const { sellerId } = req.params;
-    const query = { sellerId: new ObjectId(sellerId) };
-    const cursor = await collection.find(query);
-    const result = await cursor.toArray();
-    return res.status(200).json({ success: true, data: result });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err?.message || "Something went wrong!!",
-    });
-  }
-};
-
-export const getOrderByBuyerId = async (req, res, collection) => {
-  try {
-    const { buyerId } = req.params;
-    const query = { buyerId: new ObjectId(buyerId) };
+    const { sellerEmail } = req.params;
+    const query = { sellerEmail: sellerEmail };
     const cursor = await collection.find(query);
     const result = await cursor.toArray();
     return res.status(200).json({ success: true, data: result });
