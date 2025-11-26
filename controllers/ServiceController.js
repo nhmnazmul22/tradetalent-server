@@ -4,20 +4,7 @@ import { generateTimeStamp } from "../lib/until.js";
 export const createService = async (req, res, collection) => {
   try {
     const bodyData = req.body;
-    const serviceData = {
-      sellerEmail: bodyData.sellerEmail || null,
-      title: bodyData.title || null,
-      description: bodyData.description || null,
-      category: bodyData.category || null,
-      price: bodyData.price || null,
-      images: bodyData.images || null,
-      rating: 0,
-      totalReviews: 0,
-      pricing: bodyData.pricing || null,
-      createdAt: generateTimeStamp(),
-      updatedAt: generateTimeStamp("updatedAt"),
-    };
-    const result = await collection.insertOne(serviceData);
+    const result = await collection.insertOne(bodyData);
     return res.status(201).json({ success: true, data: result });
   } catch (err) {
     return res.status(500).json({
@@ -30,6 +17,19 @@ export const createService = async (req, res, collection) => {
 export const getServices = async (req, res, collection) => {
   try {
     const cursor = await collection.find({});
+    const result = await cursor.toArray();
+    return res.status(200).json({ success: true, data: result });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err?.message || "Something went wrong!!",
+    });
+  }
+};
+
+export const getFeaturedServices = async (req, res, collection) => {
+  try {
+    const cursor = await collection.find({}).limit(6);
     const result = await cursor.toArray();
     return res.status(200).json({ success: true, data: result });
   } catch (err) {
@@ -57,8 +57,8 @@ export const getServicesBySellerEmail = async (req, res, collection) => {
 
 export const getService = async (req, res, collection) => {
   try {
-    const { sellerEmail } = req.params;
-    const query = { sellerEmail: sellerEmail };
+    const { serviceId } = req.params;
+    const query = { _id: new ObjectId(serviceId) };
     const result = await collection.findOne(query);
 
     if (!result) {
