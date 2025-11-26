@@ -14,6 +14,19 @@ export const getSellerProfiles = async (req, res, collection) => {
   }
 };
 
+export const getTopSellerProfiles = async (req, res, collection) => {
+  try {
+    const cursor = await collection.find({}).limit(8);
+    const result = await cursor.toArray();
+    return res.status(200).json({ success: true, data: result });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err?.message || "Something went wrong!!",
+    });
+  }
+};
+
 export const createSellerProfile = async (req, res, collection) => {
   try {
     const bodyData = req.body;
@@ -35,26 +48,7 @@ export const createSellerProfile = async (req, res, collection) => {
       });
     }
 
-    const sellerProfileData = {
-      userEmail: bodyData.userEmail,
-      title: bodyData.title || null,
-      bio: bodyData.bio || null,
-      description: bodyData.description || null,
-      price: bodyData.price || null,
-      pricingType: bodyData.pricingType || null,
-      location: bodyData.location || null,
-      language: bodyData.language || null,
-      featured: false,
-      verified: bodyData.verified || false,
-      rating: 0,
-      totalOrders: 0,
-      totalReviews: 0,
-      skills: bodyData.skills || [],
-      createdAt: generateTimeStamp(),
-      updatedAt: generateTimeStamp("updatedAt"),
-    };
-
-    const result = await collection.insertOne(sellerProfileData);
+    const result = await collection.insertOne(bodyData);
     return res.status(201).json({ success: true, data: result });
   } catch (err) {
     return res.status(500).json({
