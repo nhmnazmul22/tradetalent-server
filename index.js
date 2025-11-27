@@ -33,7 +33,7 @@ import {
   getOrderBySellerEmail,
   updateOrder,
 } from "./controllers/OrderController.js";
-import firebaseAdmin from "firebase-admin"
+import firebaseAdmin from "firebase-admin";
 import { verifyFirebaseToken } from "./middlewares/tokenVerify.js";
 
 // Initialize Apps
@@ -56,7 +56,7 @@ const client = new MongoClient(uri, {
 });
 
 // Middleware
-app.use(cors());
+app.use(cors(["https://tradetalent-76cb3.web.app/"]));
 app.use(express.json());
 const verifyFirebaseAuthToken = (req, res, next) =>
   verifyFirebaseToken(req, res, next, firebaseAdmin);
