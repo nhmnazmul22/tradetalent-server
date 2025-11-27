@@ -34,7 +34,7 @@ import {
   getOrders,
   updateOrder,
 } from "./controllers/OrderController.js";
-import { verifyFirebaseToken } from "./middleware/tokenVerify.js";
+import { verifyFirebaseToken } from "./middlewares/tokenVerify.js";
 
 // Initialize Apps
 const app = express();
@@ -42,12 +42,10 @@ const uri = process.env.DATABASE_URI;
 
 const decoded = Buffer.from(process.env.SERVICE_KEY, "base64").toString("utf8");
 
-const serviceAccount = JSON.parse(decoded);;
+const serviceAccount = JSON.parse(decoded);
 firebaseAdmin.initializeApp({
   credential: firebaseAdmin.credential.cert(serviceAccount),
 });
-
-
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -60,7 +58,8 @@ const client = new MongoClient(uri, {
 // Middleware
 app.use(cors());
 app.use(express.json());
-
+const verifyFirebaseAuthToken = (req, res, next) =>
+  verifyFirebaseToken(req, res, next, firebaseAdmin);
 
 // Routes
 app.get("/health", (req, res) => {
@@ -91,16 +90,16 @@ async function runDB() {
     app.get("/top-seller-profiles", (req, res) =>
       getTopSellerProfiles(req, res, sellerProfileColl)
     );
-    app.post("/seller-profile", (req, res) =>
+    app.post("/seller-profile", verifyFirebaseAuthToken, (req, res) =>
       createSellerProfile(req, res, sellerProfileColl)
     );
-    app.get("/profile/:userEmail", (req, res) =>
+    app.get("/profile/:userEmail", verifyFirebaseAuthToken, (req, res) =>
       getSellerProfile(req, res, sellerProfileColl)
     );
-    app.get("/seller-profile/:sellerId", (req, res) =>
+    app.get("/seller-profile/:sellerId", verifyFirebaseAuthToken, (req, res) =>
       getSellerProfileBySellerId(req, res, sellerProfileColl)
     );
-    app.put("/seller-profile/:userEmail", (req, res) =>
+    app.put("/seller-profile/:userEmail", verifyFirebaseAuthToken, (req, res) =>
       updateSellerProfile(req, res, sellerProfileColl)
     );
 
@@ -109,31 +108,38 @@ async function runDB() {
     app.get("/featured-services", (req, res) =>
       getFeaturedServices(req, res, servicesColl)
     );
-    app.get("/my-services/:sellerEmail", (req, res) =>
+    app.get("/my-services/:sellerEmail", verifyFirebaseAuthToken, (req, res) =>
       getServicesBySellerEmail(req, res, servicesColl)
     );
-    app.post("/services", (req, res) => createService(req, res, servicesColl));
-    app.get("/services/:serviceId", (req, res) =>
+    app.post("/services", verifyFirebaseAuthToken, (req, res) =>
+      createService(req, res, servicesColl)
+    );
+    app.get("/services/:serviceId", verifyFirebaseAuthToken, (req, res) =>
       getService(req, res, servicesColl)
     );
-    app.put("/services/:serviceId", (req, res) =>
+    app.put("/services/:serviceId", verifyFirebaseAuthToken, (req, res) =>
       updateService(req, res, servicesColl)
     );
-    app.delete("/services/:serviceId", (req, res) =>
+    app.delete("/services/:serviceId", verifyFirebaseAuthToken, (req, res) =>
       deleteService(req, res, servicesColl)
     );
 
     // Order Routes
-    app.get("/orders", (req, res) => getOrders(req, res, ordersColl));
-    app.get("/seller-orders/:sellerEmail", (req, res) =>
-      getOrderBySellerEmail(req, res, ordersColl)
+    app.get(
+      "/seller-orders/:sellerEmail",
+      verifyFirebaseAuthToken,
+      (req, res) => getOrderBySellerEmail(req, res, ordersColl)
     );
-    app.post("/create-order", (req, res) => createOrder(req, res, ordersColl));
-    app.get("/orders/:orderId", (req, res) => getOrder(req, res, ordersColl));
-    app.put("/orders/:orderId", (req, res) =>
+    app.post("/create-order", verifyFirebaseAuthToken, (req, res) =>
+      createOrder(req, res, ordersColl)
+    );
+    app.get("/orders/:orderId", verifyFirebaseAuthToken, (req, res) =>
+      getOrder(req, res, ordersColl)
+    );
+    app.put("/orders/:orderId", verifyFirebaseAuthToken, (req, res) =>
       updateOrder(req, res, ordersColl)
     );
-    app.delete("/orders/:orderId", (req, res) =>
+    app.delete("/orders/:orderId", verifyFirebaseAuthToken, (req, res) =>
       deleteOrder(req, res, ordersColl)
     );
 
