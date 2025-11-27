@@ -4,3 +4,5 @@ todo.txt
 serverdeploy.md
 tradetalent-secret-key.json
 encode.js
+.vercel
+.env*.local
