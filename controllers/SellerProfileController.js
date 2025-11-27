@@ -80,6 +80,28 @@ export const getSellerProfile = async (req, res, collection) => {
   }
 };
 
+export const getSellerProfileBySellerId = async (req, res, collection) => {
+  try {
+    const { sellerId } = req.params;
+    const query = { _id: new ObjectId(sellerId) };
+    const result = await collection.findOne(query);
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: "Seller Profile not found for this user",
+      });
+    }
+
+    return res.status(200).json({ success: true, data: result });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err?.message || "Something went wrong!!",
+    });
+  }
+};
+
 export const updateSellerProfile = async (req, res, collection) => {
   try {
     const { userEmail } = req.params;

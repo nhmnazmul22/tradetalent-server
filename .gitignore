@@ -2,3 +2,5 @@ node_modules
 .env
 todo.txt
 serverdeploy.md
+tradetalent-secret-key.json
+encode.js

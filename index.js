@@ -12,6 +12,7 @@ import {
 import {
   createSellerProfile,
   getSellerProfile,
+  getSellerProfileBySellerId,
   getSellerProfiles,
   getTopSellerProfiles,
   updateSellerProfile,
@@ -33,10 +34,21 @@ import {
   getOrders,
   updateOrder,
 } from "./controllers/OrderController.js";
+import { verifyFirebaseToken } from "./middleware/tokenVerify.js";
 
 // Initialize Apps
 const app = express();
 const uri = process.env.DATABASE_URI;
+
+const decoded = Buffer.from(process.env.SERVICE_KEY, "base64").toString("utf8");
+
+const serviceAccount = JSON.parse(decoded);;
+firebaseAdmin.initializeApp({
+  credential: firebaseAdmin.credential.cert(serviceAccount),
+});
+
+
+
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -48,6 +60,7 @@ const client = new MongoClient(uri, {
 // Middleware
 app.use(cors());
 app.use(express.json());
+
 
 // Routes
 app.get("/health", (req, res) => {
@@ -81,8 +94,11 @@ async function runDB() {
     app.post("/seller-profile", (req, res) =>
       createSellerProfile(req, res, sellerProfileColl)
     );
-    app.get("/seller-profile/:userEmail", (req, res) =>
+    app.get("/profile/:userEmail", (req, res) =>
       getSellerProfile(req, res, sellerProfileColl)
+    );
+    app.get("/seller-profile/:sellerId", (req, res) =>
+      getSellerProfileBySellerId(req, res, sellerProfileColl)
     );
     app.put("/seller-profile/:userEmail", (req, res) =>
       updateSellerProfile(req, res, sellerProfileColl)
