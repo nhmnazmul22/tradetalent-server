@@ -3,12 +3,15 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import { MongoClient, ServerApiVersion } from "mongodb";
+import firebaseAdmin from "firebase-admin";
+
 import {
   createUser,
   deleteUser,
   getUser,
   updateUser,
 } from "./controllers/UsersController.js";
+
 import {
   createSellerProfile,
   getSellerProfile,
@@ -17,6 +20,7 @@ import {
   getTopSellerProfiles,
   updateSellerProfile,
 } from "./controllers/SellerProfileController.js";
+
 import {
   createService,
   deleteService,
@@ -26,6 +30,7 @@ import {
   getServicesBySellerEmail,
   updateService,
 } from "./controllers/ServiceController.js";
+
 import {
   createOrder,
   deleteOrder,
@@ -33,128 +38,171 @@ import {
   getOrderBySellerEmail,
   updateOrder,
 } from "./controllers/OrderController.js";
-import firebaseAdmin from "firebase-admin";
+
 import { verifyFirebaseToken } from "./middlewares/tokenVerify.js";
 
-// Initialize Apps
+
 const app = express();
-const uri = process.env.DATABASE_URI;
+app.use(cors({ origin: "https://tradetalent-76cb3.web.app" }));
+app.use(express.json());
+
 
 const decoded = Buffer.from(process.env.SERVICE_KEY, "base64").toString("utf8");
-
 const serviceAccount = JSON.parse(decoded);
-firebaseAdmin.initializeApp({
-  credential: firebaseAdmin.credential.cert(serviceAccount),
-});
 
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
+if (!firebaseAdmin.apps.length) {
+  firebaseAdmin.initializeApp({
+    credential: firebaseAdmin.credential.cert(serviceAccount),
+  });
+}
 
-// Middleware
-app.use(cors(["https://tradetalent-76cb3.web.app/"]));
-app.use(express.json());
 const verifyFirebaseAuthToken = (req, res, next) =>
   verifyFirebaseToken(req, res, next, firebaseAdmin);
 
-// Routes
+let cachedClient = null;
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedClient && cachedDb) return cachedDb;
+
+  const client = new MongoClient(process.env.DATABASE_URI, {
+    serverApi: {
+      version: ServerApiVersion.v1,
+      strict: true,
+      deprecationErrors: true,
+    },
+  });
+
+  await client.connect();
+  const db = client.db("tradeTalent");
+
+  cachedClient = client;
+  cachedDb = db;
+  return db;
+}
+
+
 app.get("/health", (req, res) => {
   res.json({ success: true, message: "Server is ok!" });
 });
 
-// Database Connection
-async function runDB() {
-  try {
-    await client.connect();
-    const database = await client.db("tradeTalent");
-    // Collection
-    const usersColl = database.collection("users");
-    const sellerProfileColl = database.collection("sellerProfiles");
-    const servicesColl = database.collection("services");
-    const ordersColl = database.collection("orders");
+// Users Routes
+app.post("/create-user", async (req, res) => {
+  const db = await connectToDatabase();
+  createUser(req, res, db.collection("users"));
+});
+app.get("/user/:email", async (req, res) => {
+  const db = await connectToDatabase();
+  getUser(req, res, db.collection("users"));
+});
+app.put("/user/:email", async (req, res) => {
+  const db = await connectToDatabase();
+  updateUser(req, res, db.collection("users"));
+});
+app.delete("/user/:email", async (req, res) => {
+  const db = await connectToDatabase();
+  deleteUser(req, res, db.collection("users"));
+});
 
-    // Users Routes
-    app.post("/create-user", (req, res) => createUser(req, res, usersColl));
-    app.get("/user/:email", (req, res) => getUser(req, res, usersColl));
-    app.put("/user/:email", (req, res) => updateUser(req, res, usersColl));
-    app.delete("/user/:email", (req, res) => deleteUser(req, res, usersColl));
-
-    // Seller Routes
-    app.get("/seller-profiles", (req, res) =>
-      getSellerProfiles(req, res, sellerProfileColl)
-    );
-    app.get("/top-seller-profiles", (req, res) =>
-      getTopSellerProfiles(req, res, sellerProfileColl)
-    );
-    app.post("/seller-profile", verifyFirebaseAuthToken, (req, res) =>
-      createSellerProfile(req, res, sellerProfileColl)
-    );
-    app.get("/profile/:userEmail", verifyFirebaseAuthToken, (req, res) =>
-      getSellerProfile(req, res, sellerProfileColl)
-    );
-    app.get("/seller-profile/:sellerId", verifyFirebaseAuthToken, (req, res) =>
-      getSellerProfileBySellerId(req, res, sellerProfileColl)
-    );
-    app.put("/seller-profile/:userEmail", verifyFirebaseAuthToken, (req, res) =>
-      updateSellerProfile(req, res, sellerProfileColl)
-    );
-
-    // Services Routes
-    app.get("/services", (req, res) => getServices(req, res, servicesColl));
-    app.get("/featured-services", (req, res) =>
-      getFeaturedServices(req, res, servicesColl)
-    );
-    app.get("/my-services/:sellerEmail", verifyFirebaseAuthToken, (req, res) =>
-      getServicesBySellerEmail(req, res, servicesColl)
-    );
-    app.post("/services", verifyFirebaseAuthToken, (req, res) =>
-      createService(req, res, servicesColl)
-    );
-    app.get("/services/:serviceId", verifyFirebaseAuthToken, (req, res) =>
-      getService(req, res, servicesColl)
-    );
-    app.put("/services/:serviceId", verifyFirebaseAuthToken, (req, res) =>
-      updateService(req, res, servicesColl)
-    );
-    app.delete("/services/:serviceId", verifyFirebaseAuthToken, (req, res) =>
-      deleteService(req, res, servicesColl)
-    );
-
-    // Order Routes
-    app.get(
-      "/seller-orders/:sellerEmail",
-      verifyFirebaseAuthToken,
-      (req, res) => getOrderBySellerEmail(req, res, ordersColl)
-    );
-    app.post("/create-order", verifyFirebaseAuthToken, (req, res) =>
-      createOrder(req, res, ordersColl)
-    );
-    app.get("/orders/:orderId", verifyFirebaseAuthToken, (req, res) =>
-      getOrder(req, res, ordersColl)
-    );
-    app.put("/orders/:orderId", verifyFirebaseAuthToken, (req, res) =>
-      updateOrder(req, res, ordersColl)
-    );
-    app.delete("/orders/:orderId", verifyFirebaseAuthToken, (req, res) =>
-      deleteOrder(req, res, ordersColl)
-    );
-
-    //  Ping the database
-    // await client.db("admin").command({ ping: 1 });
-    // console.log(
-    //   "Pinged your deployment. You successfully connected to MongoDB!"
-    // );
-  } finally {
+// Seller Routes
+app.get("/seller-profiles", async (req, res) => {
+  const db = await connectToDatabase();
+  getSellerProfiles(req, res, db.collection("sellerProfiles"));
+});
+app.get("/top-seller-profiles", async (req, res) => {
+  const db = await connectToDatabase();
+  getTopSellerProfiles(req, res, db.collection("sellerProfiles"));
+});
+app.post("/seller-profile", verifyFirebaseAuthToken, async (req, res) => {
+  const db = await connectToDatabase();
+  createSellerProfile(req, res, db.collection("sellerProfiles"));
+});
+app.get("/profile/:userEmail", verifyFirebaseAuthToken, async (req, res) => {
+  const db = await connectToDatabase();
+  getSellerProfile(req, res, db.collection("sellerProfiles"));
+});
+app.get(
+  "/seller-profile/:sellerId",
+  verifyFirebaseAuthToken,
+  async (req, res) => {
+    const db = await connectToDatabase();
+    getSellerProfileBySellerId(req, res, db.collection("sellerProfiles"));
   }
-}
+);
+app.put(
+  "/seller-profile/:userEmail",
+  verifyFirebaseAuthToken,
+  async (req, res) => {
+    const db = await connectToDatabase();
+    updateSellerProfile(req, res, db.collection("sellerProfiles"));
+  }
+);
 
-runDB().catch(console.dir);
+// Services Routes
+app.get("/services", async (req, res) => {
+  const db = await connectToDatabase();
+  getServices(req, res, db.collection("services"));
+});
+app.get("/featured-services", async (req, res) => {
+  const db = await connectToDatabase();
+  getFeaturedServices(req, res, db.collection("services"));
+});
+app.get(
+  "/my-services/:sellerEmail",
+  verifyFirebaseAuthToken,
+  async (req, res) => {
+    const db = await connectToDatabase();
+    getServicesBySellerEmail(req, res, db.collection("services"));
+  }
+);
+app.post("/services", verifyFirebaseAuthToken, async (req, res) => {
+  const db = await connectToDatabase();
+  createService(req, res, db.collection("services"));
+});
+app.get("/services/:serviceId", verifyFirebaseAuthToken, async (req, res) => {
+  const db = await connectToDatabase();
+  getService(req, res, db.collection("services"));
+});
+app.put("/services/:serviceId", verifyFirebaseAuthToken, async (req, res) => {
+  const db = await connectToDatabase();
+  updateService(req, res, db.collection("services"));
+});
+app.delete(
+  "/services/:serviceId",
+  verifyFirebaseAuthToken,
+  async (req, res) => {
+    const db = await connectToDatabase();
+    deleteService(req, res, db.collection("services"));
+  }
+);
 
-// Listener
+// Order Routes
+app.get(
+  "/seller-orders/:sellerEmail",
+  verifyFirebaseAuthToken,
+  async (req, res) => {
+    const db = await connectToDatabase();
+    getOrderBySellerEmail(req, res, db.collection("orders"));
+  }
+);
+app.post("/create-order", verifyFirebaseAuthToken, async (req, res) => {
+  const db = await connectToDatabase();
+  createOrder(req, res, db.collection("orders"));
+});
+app.get("/orders/:orderId", verifyFirebaseAuthToken, async (req, res) => {
+  const db = await connectToDatabase();
+  getOrder(req, res, db.collection("orders"));
+});
+app.put("/orders/:orderId", verifyFirebaseAuthToken, async (req, res) => {
+  const db = await connectToDatabase();
+  updateOrder(req, res, db.collection("orders"));
+});
+app.delete("/orders/:orderId", verifyFirebaseAuthToken, async (req, res) => {
+  const db = await connectToDatabase();
+  deleteOrder(req, res, db.collection("orders"));
+});
+
+// -------------------- Server Listener --------------------
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);

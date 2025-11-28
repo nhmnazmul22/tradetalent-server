@@ -6,3 +6,4 @@ tradetalent-secret-key.json
 encode.js
 .vercel
 .env*.local
+index-copy.js
